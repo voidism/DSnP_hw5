@@ -161,29 +161,8 @@ public:
      }
      }
    }  // delete all nodes except for the dummy node
-   void quicksort(iterator head,iterator end) const
-   {
-     if(head!=end){
-     iterator p = head._node->_prev;
-     for (iterator i = head; i != end;i++){
-       if(i._node->_data < end._node->_data){
-         p++;
-         T tmp = p._node->_data;
-         p._node->_data = i._node->_data;
-         i._node->_data = tmp;
-        }
-     }
-     p++;
-     T tmp = p._node->_data;
-     p._node->_data = end._node->_data;
-     end._node->_data = tmp;
-     quicksort(head, p._node->_prev);
-     quicksort(p._node->_next, end);
-     }
-   }
    void sort() const {
-     iterator endprev = end();
-     quicksort(begin(), --endprev);
+     quicksort(begin(), end());
    }
 
  private:
@@ -192,6 +171,33 @@ public:
    mutable bool   _isSorted; // (optionally) to indicate the array is sorted
 
    // [OPTIONAL TODO] helper functions; called by public member functions
+   void quicksort(iterator head,iterator end) const
+   {
+     if (head._node&&end._node&&head!=end)
+     {
+       iterator tail(end._node->_prev);
+       if (head != tail)
+       {
+         iterator p = head._node->_prev;
+         for (iterator i = head; i != end; i++)
+         {
+           if (*i < *tail)
+           {
+             p._node = p._node->_next;
+             const T tmp = p._node->_data;
+             p._node->_data = i._node->_data;
+             i._node->_data = tmp;
+           }
+         }
+         p._node = p._node->_next;
+         const T tmp = p._node->_data;
+         *p = *tail;
+         *tail = tmp;
+         quicksort(head, p);
+         quicksort(++p, end);
+       }
+    }
+   }
 };
 
 #endif // DLIST_H
