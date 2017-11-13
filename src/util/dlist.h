@@ -162,7 +162,9 @@ public:
      }
    }  // delete all nodes except for the dummy node
    void sort() const {
+     if(!_isSorted)
      quicksort(begin(), end());
+     _isSorted = true;
    }
 
  private:
