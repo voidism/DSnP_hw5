@@ -84,55 +84,48 @@ public:
    const T& operator [] (size_t i) const { return _data[0]; }
 
    void push_back(const T& x) {
-     _size += 1;
      if(_size>=_capacity){
        if(_capacity == 0){
          _capacity = 1;
-         _data = new T(x);
         }
-        else{
-          size_t precap = _capacity;
-          _capacity *= 2;
-          T *newdata = new T[_capacity];
-          if(precap>2){
-          for (size_t i = 0; i < _size-1;i++){
-            newdata[i] = _data[i];
-          }
-          newdata[_size - 1] = x;
-          delete [] _data;
-        }
-        else{
-          newdata[0] = *_data;
-          newdata[_size - 1] = x;
-          delete _data;
-        }
-        _data = newdata;
-        delete [] newdata;
-        }
+       else _capacity *= 2;
+          T *tmpdata = _data;
+          _data = new T[_capacity];
+            for (size_t i = 0; i < _size;i++){
+              *(_data+i) = *(tmpdata+i);
+            }
+            *(_data+_size) = x;
+            delete [] tmpdata;
       }
       else{
-        _data[_size - 1] = x;
+        *(_data+_size) = x;
       }
-   }
+      _size += 1;
+      _isSorted = false;
+    }
+    
    void pop_front() { 
      if(_size==1){clear();}
      else if (empty()){}
      else{
-       _data[0] = _data[_size - 1];
-
-     }
+       *(_data) = *(_data+_size - 1);
+      }
+      pop_back();
+      _isSorted = false;
    }
    void pop_back() { 
      if(empty()){}
      else{
        _size -= 1;
-     }
+      }
+      _isSorted = false;
    }
 
    bool erase(iterator pos) { 
      if(empty())return false;
      else{
-       *pos = _data[_size - 1];
+       *pos = *(_data + _size - 1);
+       pop_back();
        return true;
      }
     }
@@ -141,7 +134,8 @@ public:
      else{
        for (size_t i = 0; i < _size;i++){
          if(_data[i]==x){
-           _data[i] = _data[_size - 1];
+           *(_data + i) = *(_data+_size - 1);
+           pop_back();
            return true;
          }
         }
@@ -154,21 +148,23 @@ public:
     // [Optional TODO] Feel free to change, but DO NOT change ::sort()
     void sort() const
     {
-      if (!empty())
-        ::sort(_data, _data + _size); }
+      if (!empty()&&!_isSorted)
+        ::sort(_data, _data + _size);
+      _isSorted = true;
+    }
 
-   // Nice to have, but not required in this homework...
-   // void reserve(size_t n) { ... }
-   // void resize(size_t n) { ... }
+    // Nice to have, but not required in this homework...
+    // void reserve(size_t n) { ... }
+    // void resize(size_t n) { ... }
 
-private:
-   // [NOTE] DO NOT ADD or REMOVE any data member
-   T*            _data;
-   size_t        _size;       // number of valid elements
-   size_t        _capacity;   // max number of elements
-   mutable bool  _isSorted;   // (optionally) to indicate the array is sorted
+  private:
+    // [NOTE] DO NOT ADD or REMOVE any data member
+    T *_data;
+    size_t _size;           // number of valid elements
+    size_t _capacity;       // max number of elements
+    mutable bool _isSorted; // (optionally) to indicate the array is sorted
 
-   // [OPTIONAL TODO] Helper functions; called by public member functions
+    // [OPTIONAL TODO] Helper functions; called by public member functions
 };
 
 #endif // ARRAY_H
