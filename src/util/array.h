@@ -11,7 +11,6 @@
 
 #include <cassert>
 #include <algorithm>
-#include <stack>
 
 using namespace std;
 

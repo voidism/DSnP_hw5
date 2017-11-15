@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/home/jexus/Documents/DSnP_hw5/adtTest.array",
+            "program": "/home/jexus/Documents/DSnP_hw5/adtTest.bst",
             "args": [],
             "stopAtEntry": false,
             "cwd": "/home/jexus/Documents/DSnP_hw5",

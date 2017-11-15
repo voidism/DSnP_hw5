@@ -10,6 +10,13 @@
 #define BST_H
 
 #include <cassert>
+#include <stack>
+
+#define find_parent_to_me(mother){\
+      if(!mother.goBack()) _hand = &_root;\
+      else if(mother._node->_left==pos._node) _hand = &mother._node->_left;\
+      else if(mother._node->_right==pos._node) _hand = &mother._node->_right;\
+    }
 
 using namespace std;
 
@@ -42,8 +49,10 @@ class BSTree
    // TODO: design your own class!!
    public:
     BSTree() {
-  //     _root = new BSTreeNode<T>;
-  //     _root->_left = _root->_right = 0;
+      _root = _tail = new BSTreeNode<T>(T());
+      
+      _size = 0;
+      //     _root->_left = _root->_right = 0;
    }
    ~BSTree() { clear(); delete _root; }
    class iterator { 
@@ -51,7 +60,9 @@ class BSTree
      friend class BSTree;
 
    public:
-      iterator(BSTreeNode<T>* n= 0): _node(n) {}
+      iterator(BSTreeNode<T>* n= 0): _node(n) {
+        //_trace.push(_root);
+      }
       iterator(const BSTreeNode<T>* n= 0): _node(n) {}
       iterator(const iterator& i) : _node(i._node) {}
       ~iterator() {} // Should NOT delete _node
@@ -60,6 +71,7 @@ class BSTree
       const T& operator * () const { return *(_node); }
       T& operator * () { return _node->_data; }
       iterator& operator ++ () { 
+        _trace.push(_root);
         if(_node->_right!=0){
           _trace.push(_node);
           _node = _node->_right;
@@ -68,15 +80,17 @@ class BSTree
         else{
           while(1){
             BSTreeNode<T>* pre = _node;
-            if(!goBack()){
-              if(_node->_right!=0) {
-                _node=_node->_right;
+            goBack();
+            if (_node==_root)
+            {
+              // if(_node->_right!=0) {
+              //   _node=_node->_right;
+              //   break;
+              // }
+              // else{
+              //   _node = 0;
                 break;
-              }
-              else{
-                _node = to_tail;
-                break;
-              }
+              //}
             }
             if (_node->_left == pre)
               break;
@@ -90,6 +104,7 @@ class BSTree
         return tmp;
       }
       iterator& operator -- () { 
+        _trace.push(_root);
         if(_node->_left!=0){
           _trace.push(_node);
           _node = _node->_left;
@@ -99,13 +114,13 @@ class BSTree
           while(1){
             BSTreeNode<T>* pre = _node;
             if(!goBack()){
-              if(_node->_left!=0) {
-                _node=_node->_left;
+              // if(_node->_left!=0) {
+              //   _node=_node->_left;
+              //   break;
+              // }
+              // else{
                 break;
-              }
-              else{
-                break;
-              }
+              //}
             }
             if(_node->_right==pre) break;
           }
@@ -132,6 +147,7 @@ class BSTree
       iterator toMin()
       {
         while(_node->_left!=0) {
+          //BSTreeNode<T> *copy_node = _node;
           _trace.push(_node);
           _node = _node->_left;
         }
@@ -139,6 +155,7 @@ class BSTree
       }
       iterator toMax(){
         while(_node->_right!=0) {
+          //BSTreeNode<T> *copy_node = _node;
           _trace.push(_node);
           _node = _node->_right;
         }
@@ -152,10 +169,15 @@ class BSTree
       }
    };
 
-   iterator begin() const { return iterator(_root).toMin(); }
+   iterator begin() const {
+     iterator tmp(_root);
+     tmp.toMin();
+     return tmp;
+    }
    
    iterator end() const {
-     const iterator tmp(to_tail);
+     //return iterator(_tail);
+     iterator tmp(_tail);
      return tmp;
    }
 
@@ -170,62 +192,59 @@ class BSTree
      insertnode(x, _root);
      _size++;
    }
-   void insertnode(const T& x,BSTreeNode<T>* t) {
-     if(t==0) t = new BSTreeNode<T>(x,0,0);
+   void insertnode(const T& x,BSTreeNode<T>*& t) {
+     if(t==_tail) t = new BSTreeNode<T>(x,0,_tail);
+     else if(t==0) {
+         t = new BSTreeNode<T>(x, 0, 0);
+     }
      else if(t->_data >= x) insertnode(x,t->_left);
      else if(t->_data < x) insertnode(x,t->_right);
+     //else if(t->_data == x) insertnode(x,--t->_right);
     }
    void pop_front() {
      erase(begin());
    }
    void pop_back() {
-     erase(iterator(_root).toMax());
-   }
+     iterator tmp(_root);
+     tmp.toMax();
+     tmp.goBack();
+     erase(tmp);
+    }
+    // BSTreeNode<T>* find_parent_to_me(iterator& pos){
+    //   iterator mother = pos;
+    //   if(!mother.goBack()){
+    //     return _root;
+    //   }
+    //   else if(mother._node->_left==pos._node) return &mother._node->_left;
+    //   else if(mother._node->_right==pos._node) return &mother._node->_right;
+    // }
 
    // return false if nothing to erase
    bool erase(iterator pos) { 
      if(empty()) return false;
-     if(pos._node->_left==0&&pos._node->_right==0){
-       iterator mother = pos;
-       if(!mother.goBack()){
-         clear();
-         return true;
-        }
-       if(mother._node->_left==pos._node){
+     if(pos._node==_tail) return false;
+     iterator mother = pos;
+     BSTreeNode<T> ** _hand = 0;
+     if(!mother.goBack()) {_hand = &_root;}
+      else if(mother._node->_left==pos._node) _hand = &mother._node->_left;
+      else if(mother._node->_right==pos._node) _hand = &mother._node->_right;
+     BSTreeNode<T> *_leaf = 0;
+     if (*_hand == _root) _leaf = _tail;
+     if (pos._node->_left == 0 && pos._node->_right == 0)
+     {
          delete pos._node;
-         mother._node->_left = 0;
+         *_hand = _leaf;
          return true;
-       }
-       else if (mother._node->_right == pos._node)
-       {
-         delete pos._node;
-         mother._node->_right = 0;
-         return true;
-       }
       }
      else if(pos._node->_left==0){
-       iterator mother = pos;
-       if(!mother.goBack()){
-         _root=pos._node->_right;
+         *_hand = pos._node->_right;
+         delete pos._node;
          return true;
         }
-        else{
-          mother._node->_right = pos._node->_right;
-          delete pos._node;
-          return true;
-        }
-      }
      else if(pos._node->_right==0){
-        iterator mother = pos;
-        if(!mother.goBack()){
-          _root=pos._node->_left;
-          return true;
-        }
-        else{
-          mother._node->_left = pos._node->_left;
-          delete pos._node;
-          return true;
-        }
+         *_hand = pos._node->_left;
+         delete pos._node;
+         return true;
       }
      else{
        iterator alter = pos;
@@ -234,7 +253,6 @@ class BSTree
        erase(alter);
        return true;
       }
-      return false;
    }
 
 
@@ -271,7 +289,9 @@ class BSTree
       }
      }
      if (found==-1) return false;
-     return erase(walker);
+     bool result = erase(walker);
+     if(result) ++_size;
+     return result;
    }
 
    void clear() {
@@ -284,9 +304,8 @@ class BSTree
    }
 
  private:
-   BSTreeNode<T>*  _root;
-   static BSTreeNode<T> _tail;
-   static BSTreeNode<T> *to_tail = &_tail;
+   BSTreeNode<T>* _root;
+   BSTreeNode<T> *_tail;
    size_t _size;
 };
 
