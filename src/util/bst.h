@@ -12,11 +12,40 @@
 #include <cassert>
 #include <stack>
 
-#define find_parent_to_me(mother){\
-      if(!mother.goBack()) _hand = &_root;\
-      else if(mother._node->_left==pos._node) _hand = &mother._node->_left;\
-      else if(mother._node->_right==pos._node) _hand = &mother._node->_right;\
-    }
+//#define find_parent_to_me(mother){
+//      if(!mother.goBack()) _hand = &_root;
+//      else if(mother._node->_left==pos._node) _hand = &mother._node->_left;
+//      else if(mother._node->_right==pos._node) _hand = &mother._node->_right;
+//    }
+
+#define erase_hand(_hand)                              \
+  if (pos._node->_left == 0 && pos._node->_right == 0) \
+  {                                                    \
+    delete pos._node;                                  \
+    _hand = 0;                                         \
+    return true;                                       \
+  }                                                    \
+  else if (pos._node->_left == 0)                      \
+  {                                                    \
+    _hand = pos._node->_right;                         \
+    delete pos._node;                                  \
+    return true;                                       \
+  }                                                    \
+  else if (pos._node->_right == 0)                     \
+  {                                                    \
+    _hand = pos._node->_left;                          \
+    delete pos._node;                                  \
+    return true;                                       \
+  }                                                    \
+  else                                                 \
+  {                                                    \
+    iterator alter = pos;                              \
+    if (++alter == pos)                                \
+      --alter;                                         \
+    pos._node->_data = alter._node->_data;             \
+    erase(alter);                                      \
+    return true;                                       \
+  }
 
 using namespace std;
 
@@ -61,7 +90,7 @@ class BSTree
 
    public:
       iterator(BSTreeNode<T>* n= 0): _node(n) {
-        //_trace.push(_root);
+        //_trace.push(n);
       }
       iterator(const BSTreeNode<T>* n= 0): _node(n) {}
       iterator(const iterator& i) : _node(i._node) {}
@@ -71,7 +100,7 @@ class BSTree
       const T& operator * () const { return *(_node); }
       T& operator * () { return _node->_data; }
       iterator& operator ++ () { 
-        _trace.push(_root);
+        //_trace.push(_root);
         if(_node->_right!=0){
           _trace.push(_node);
           _node = _node->_right;
@@ -81,7 +110,7 @@ class BSTree
           while(1){
             BSTreeNode<T>* pre = _node;
             goBack();
-            if (_node==_root)
+            if (_trace.empty())
             {
               // if(_node->_right!=0) {
               //   _node=_node->_right;
@@ -104,7 +133,7 @@ class BSTree
         return tmp;
       }
       iterator& operator -- () { 
-        _trace.push(_root);
+        //_trace.push(BSTree::_root);
         if(_node->_left!=0){
           _trace.push(_node);
           _node = _node->_left;
@@ -113,7 +142,9 @@ class BSTree
         else{
           while(1){
             BSTreeNode<T>* pre = _node;
-            if(!goBack()){
+            goBack();
+            if (_trace.empty())
+            {
               // if(_node->_left!=0) {
               //   _node=_node->_left;
               //   break;
@@ -224,35 +255,34 @@ class BSTree
      if(empty()) return false;
      if(pos._node==_tail) return false;
      iterator mother = pos;
-     BSTreeNode<T> ** _hand = 0;
-     if(!mother.goBack()) {_hand = &_root;}
-      else if(mother._node->_left==pos._node) _hand = &mother._node->_left;
-      else if(mother._node->_right==pos._node) _hand = &mother._node->_right;
-     BSTreeNode<T> *_leaf = 0;
-     if (*_hand == _root) _leaf = _tail;
-     if (pos._node->_left == 0 && pos._node->_right == 0)
-     {
-         delete pos._node;
-         *_hand = _leaf;
-         return true;
-      }
-     else if(pos._node->_left==0){
-         *_hand = pos._node->_right;
-         delete pos._node;
-         return true;
-        }
-     else if(pos._node->_right==0){
-         *_hand = pos._node->_left;
-         delete pos._node;
-         return true;
-      }
-     else{
-       iterator alter = pos;
-       if(++alter == pos) --alter;
-       pos._node->_data = alter._node->_data;
-       erase(alter);
-       return true;
-      }
+     if(!mother.goBack()){cout << "fuckyou\n";}
+     if(mother._node->_left == pos._node) { erase_hand(mother._node->_left); }
+     else if(mother._node->_right == pos._node) { erase_hand(mother._node->_right); }
+     else cout << "fuckup bitch!\n"; 
+     return false;
+    //  if (pos._node->_left == 0 && pos._node->_right == 0)
+    //  {
+    //      delete pos._node;
+    //      *_hand = _leaf;
+    //      return true;
+    //   }
+    //  else if(pos._node->_left==0){
+    //      *_hand = pos._node->_right;
+    //      delete pos._node;
+    //      return true;
+    //     }
+    //  else if(pos._node->_right==0){
+    //      *_hand = pos._node->_left;
+    //      delete pos._node;
+    //      return true;
+    //   }
+    //  else{
+    //    iterator alter = pos;
+    //    if(++alter == pos) --alter;
+    //    pos._node->_data = alter._node->_data;
+    //    erase(alter);
+    //    return true;
+    //   }
    }
 
 
@@ -290,7 +320,7 @@ class BSTree
      }
      if (found==-1) return false;
      bool result = erase(walker);
-     if(result) ++_size;
+     if(result) --_size;
      return result;
    }
 
