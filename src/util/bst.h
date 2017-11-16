@@ -18,33 +18,36 @@
 //      else if(mother._node->_right==pos._node) _hand = &mother._node->_right;
 //    }
 
-#define erase_hand(_hand)                              \
-  if (pos._node->_left == 0 && pos._node->_right == 0) \
-  {                                                    \
-    delete pos._node;                                  \
-    _hand = 0;                                         \
-    return true;                                       \
-  }                                                    \
-  else if (pos._node->_left == 0)                      \
-  {                                                    \
-    _hand = pos._node->_right;                         \
-    delete pos._node;                                  \
-    return true;                                       \
-  }                                                    \
-  else if (pos._node->_right == 0)                     \
-  {                                                    \
-    _hand = pos._node->_left;                          \
-    delete pos._node;                                  \
-    return true;                                       \
-  }                                                    \
-  else                                                 \
-  {                                                    \
-    iterator alter = pos;                              \
-    if (++alter == pos)                                \
-      --alter;                                         \
-    pos._node->_data = alter._node->_data;             \
-    erase(alter);                                      \
-    return true;                                       \
+#define erase_hand(_hand)                          \
+  if (posnode->_left == 0 && posnode->_right == 0) \
+  {                                                \
+    delete posnode;                                \
+    _hand = 0;                                     \
+    --_size;                                       \
+    return true;                                   \
+  }                                                \
+  else if (posnode->_left == 0)                    \
+  {                                                \
+    _hand = posnode->_right;                       \
+    delete posnode;                                \
+    --_size;                                       \
+    return true;                                   \
+  }                                                \
+  else if (posnode->_right == 0)                   \
+  {                                                \
+    _hand = posnode->_left;                        \
+    delete posnode;                                \
+    --_size;                                       \
+    return true;                                   \
+  }                                                \
+  else                                             \
+  {                                                \
+    iterator alter = pos;                          \
+    if (++alter == pos)                            \
+      --alter;                                     \
+    posnode->_data = alter._node->_data;           \
+    erase(alter);                                  \
+    return true;                                   \
   }
 
 using namespace std;
@@ -93,7 +96,7 @@ class BSTree
         //_trace.push(n);
       }
       iterator(const BSTreeNode<T>* n= 0): _node(n) {}
-      iterator(const iterator& i) : _node(i._node) {}
+      iterator(const iterator& i) : _node(i._node), _trace(i._trace) {}
       ~iterator() {} // Should NOT delete _node
 
       // TODO: implement these overloaded operators
@@ -180,6 +183,8 @@ class BSTree
         while(_node->_left!=0) {
           //BSTreeNode<T> *copy_node = _node;
           _trace.push(_node);
+
+          //cout << "push push >< ~MIN~ !!!\n";
           _node = _node->_left;
         }
         return *this;
@@ -188,25 +193,28 @@ class BSTree
         while(_node->_right!=0) {
           //BSTreeNode<T> *copy_node = _node;
           _trace.push(_node);
+          //cout << "push push >< ~MAX~ !!!\n";
           _node = _node->_right;
         }
         return *this;
       }
       bool goBack(){
-        if(_trace.empty()) return false;
+        //cout << "let go back!!\n";
+        if (_trace.empty())
+          return false;
         _node = _trace.top();
         _trace.pop();
         return true;
       }
    };
 
-   iterator begin() const {
+   iterator begin() const{
      iterator tmp(_root);
      tmp.toMin();
      return tmp;
     }
    
-   iterator end() const {
+   iterator end() const{
      //return iterator(_tail);
      iterator tmp(_tail);
      return tmp;
@@ -254,35 +262,13 @@ class BSTree
    bool erase(iterator pos) { 
      if(empty()) return false;
      if(pos._node==_tail) return false;
-     iterator mother = pos;
-     if(!mother.goBack()){cout << "fuckyou\n";}
-     if(mother._node->_left == pos._node) { erase_hand(mother._node->_left); }
-     else if(mother._node->_right == pos._node) { erase_hand(mother._node->_right); }
-     else cout << "fuckup bitch!\n"; 
+     BSTreeNode<T> *posnode = pos._node;
+     iterator &mother = pos;
+     if(!mother.goBack()){erase_hand(_root);}
+     if(mother._node->_left == posnode) { erase_hand(mother._node->_left); }
+     else if(mother._node->_right == posnode) { erase_hand(mother._node->_right); }
+     //else cout << "fuckup bitch!\n"; 
      return false;
-    //  if (pos._node->_left == 0 && pos._node->_right == 0)
-    //  {
-    //      delete pos._node;
-    //      *_hand = _leaf;
-    //      return true;
-    //   }
-    //  else if(pos._node->_left==0){
-    //      *_hand = pos._node->_right;
-    //      delete pos._node;
-    //      return true;
-    //     }
-    //  else if(pos._node->_right==0){
-    //      *_hand = pos._node->_left;
-    //      delete pos._node;
-    //      return true;
-    //   }
-    //  else{
-    //    iterator alter = pos;
-    //    if(++alter == pos) --alter;
-    //    pos._node->_data = alter._node->_data;
-    //    erase(alter);
-    //    return true;
-    //   }
    }
 
 
@@ -320,13 +306,33 @@ class BSTree
      }
      if (found==-1) return false;
      bool result = erase(walker);
-     if(result) --_size;
      return result;
    }
-
+      
    void clear() {
-     for (iterator i = begin(); i != end();++i)
-       erase(i);
+     while(!empty()) pop_front();
+    // int nothing = 0;
+    // for (iterator i = begin(); i != end(); i++)
+    // {
+    //   if(i._node->_left==_tail) cout<< "fuckyou left is tail!!!\n";
+    //   else if(i._node->_right==_tail) cout<< "fuckyou right is tail!!!\n";
+    //   else nothing++;
+    // }
+    // cout << "safe nothing:" << nothing << endl;
+    // nothing = 0;
+    // iterator i = begin(), j = begin();
+    // while (!empty()){
+    //   j++;
+    //   cout << i._node->_data << endl;
+    //   if (!erase(i))
+    //     nothing++;
+    //   if(j==_tail)break;
+    //   i = j;
+    // }
+    // cout << "fuck it can't be erase bitch! : " << nothing << endl;
+
+    //for(iterator i = begin(); i != end(); ++i) { erase(i); }
+
    } // delete all nodes except for the root node
    void sort() const {}
    void print() const {
