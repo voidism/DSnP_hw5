@@ -29,8 +29,6 @@
   else if (posnode->_left == 0)                    \
   {                                                \
     _hand = posnode->_right;                       \
-    if (_hand == 0) cout                           \
-        << "goodgoodgood!\n";                      \
     delete posnode;                                \
     --_size;                                       \
     return true;                                   \
@@ -45,13 +43,12 @@
   else                                             \
   {                                                \
     iterator alter = pos;                          \
-    --alter;                                       \
-    if (alter == pos)                              \
+    if (--alter == pos)                              \
     {                                              \
       ++(++alter);                                 \
       cout << "fuckupbitch\n";                     \
     }                                              \
-    if (alter == pos || alter._node == _tail)      \
+    if (alter == pos)      \
       return false;                                \
     posnode->_data = alter._node->_data;           \
     erase(alter);                                  \
@@ -119,6 +116,7 @@ public:
     iterator &operator++()
     {
       //_trace.push(_root);
+      iterator tmp = *this;
       if (_node->_right != 0)
       {
         _trace.push(_node);
@@ -133,14 +131,8 @@ public:
           goBack();
           if (_trace.empty())
           {
-            // if(_node->_right!=0) {
-            //   _node=_node->_right;
-            //   break;
-            // }
-            // else{
-            //   _node = 0;
-            break;
-            //}
+            *(this) = tmp;
+            return tmp;
           }
           if (_node->_left == pre)
             break;
@@ -170,12 +162,13 @@ public:
         {
           BSTreeNode<T> *pre = _node;
           goBack();
-          if (_trace.empty())
-          {
-            return tmp;
-          }
           if (_node->_right == pre)
             break;
+          if (_trace.empty())
+          {
+            *(this) = tmp;
+            return tmp;
+          }
         }
       }
       return *(this);
@@ -283,8 +276,6 @@ public:
   void pop_back()
   {
     iterator tmp = end();
-    if(tmp._node==_tail)
-      cout << "cool\n";
     tmp.goBack();
     erase(tmp);
   }
@@ -319,6 +310,7 @@ public:
       erase_hand(mother._node->_right);
     }
     //else cout << "fuckup bitch!\n";
+    //_tail->_left = _tail->_right = 0;
     return false;
   }
 
