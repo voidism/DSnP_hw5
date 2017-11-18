@@ -10,52 +10,55 @@
 #define BST_H
 
 #include <cassert>
-#include <stack>
-
-//#define find_parent_to_me(mother){
-//      if(!mother.goBack()) _hand = &_root;
-//      else if(mother._node->_left==pos._node) _hand = &mother._node->_left;
-//      else if(mother._node->_right==pos._node) _hand = &mother._node->_right;
-//    }
-
-#define erase_hand(_hand)                          \
-  if (posnode->_left == 0 && posnode->_right == 0) \
-  {                                                \
-    delete posnode;                                \
-    _hand = 0;                                     \
-    --_size;                                       \
-    return true;                                   \
-  }                                                \
-  else if (posnode->_left == 0)                    \
-  {                                                \
-    _hand = posnode->_right;                       \
-    delete posnode;                                \
-    --_size;                                       \
-    return true;                                   \
-  }                                                \
-  else if (posnode->_right == 0)                   \
-  {                                                \
-    _hand = posnode->_left;                        \
-    delete posnode;                                \
-    --_size;                                       \
-    return true;                                   \
-  }                                                \
-  else                                             \
-  {                                                \
-    iterator alter = pos;                          \
-    if (--alter == pos)                              \
-    {                                              \
-      ++(++alter);                                 \
-      cout << "fuckupbitch\n";                     \
-    }                                              \
-    if (alter == pos)      \
-      return false;                                \
-    posnode->_data = alter._node->_data;           \
-    erase(alter);                                  \
-    return true;                                   \
-  }
 
 using namespace std;
+
+#define erase_hand(_hand, _mom)        \
+  if (_hand->_left != 0 &&             \
+      (_hand->_right == _tail))        \
+  {                                    \
+    _hand = _hand->_left;              \
+    _hand->_parent = _mom;             \
+    iterator nanja(_hand);             \
+    nanja.toMax();                     \
+    nanja._node->_right = _tail;       \
+    _tail->_parent = nanja._node;      \
+    delete posnode;                    \
+    returntrue;                        \
+  }                                    \
+  else if (_hand->_left == 0 &&             \
+      (_hand->_right == 0))            \
+  {                                    \
+    delete posnode;                    \
+    _hand = 0;                         \
+    returntrue;                        \
+  }                                    \
+  else if (_hand->_left == 0)          \
+  {                                    \
+    _hand = _hand->_right;             \
+    _hand->_parent = _mom;             \
+    delete posnode;                    \
+    returntrue;                        \
+  }                                    \
+  else if (_hand->_right == 0)         \
+  {                                    \
+    _hand = _hand->_left;              \
+    _hand->_parent = _mom;             \
+    delete posnode;                    \
+    returntrue;                        \
+  }                                    \
+  else                                 \
+  {                                    \
+    iterator alter = pos;              \
+    alter++;                           \
+    _hand->_data = alter._node->_data; \
+    return erase(alter);               \
+  }
+
+#define returntrue \
+  _size--;         \
+  _root->_parent = 0;\
+  return true;
 
 template <class T>
 class BSTree;
@@ -68,15 +71,17 @@ class BSTree;
 template <class T>
 class BSTreeNode
 {
+  // TODO: design your own class!!
   friend class BSTree<T>;
   friend class BSTree<T>::iterator;
   // TODO: design your own class!!
-  BSTreeNode(const T &d, BSTreeNode<T> *p = 0, BSTreeNode<T> *n = 0) : _data(d), _left(p), _right(n) {}
+  BSTreeNode(const T &d, BSTreeNode<T> *l = 0, BSTreeNode<T> *r = 0, BSTreeNode<T> *p = 0) : _data(d), _left(l), _right(r), _parent(p) {}
 
   // [NOTE] DO NOT ADD or REMOVE any data member
   T _data;
   BSTreeNode<T> *_left;
   BSTreeNode<T> *_right;
+  BSTreeNode<T> *_parent;
 };
 
 template <class T>
@@ -86,7 +91,7 @@ class BSTree
 public:
   BSTree()
   {
-    _root = _tail = new BSTreeNode<T>(T(), 0, 0);
+    _root = _tail = new BSTreeNode<T>(T(), 0, 0, 0);
 
     _size = 0;
     //     _root->_left = _root->_right = 0;
@@ -107,7 +112,7 @@ public:
       //_trace.push(n);
     }
     iterator(const BSTreeNode<T> *n = 0) : _node(n) {}
-    iterator(const iterator &i) : _node(i._node), _trace(i._trace) {}
+    iterator(const iterator &i) : _node(i._node) {}
     ~iterator() {} // Should NOT delete _node
 
     // TODO: implement these overloaded operators
@@ -115,11 +120,9 @@ public:
     T &operator*() { return _node->_data; }
     iterator &operator++()
     {
-      //_trace.push(_root);
-      iterator tmp = *this;
+      //iterator tmp = *this;
       if (_node->_right != 0)
       {
-        _trace.push(_node);
         _node = _node->_right;
         toMin();
       }
@@ -128,12 +131,12 @@ public:
         while (1)
         {
           BSTreeNode<T> *pre = _node;
-          goBack();
-          if (_trace.empty())
+          if (_node->_parent == 0)
           {
-            *(this) = tmp;
-            return tmp;
+            //*this = tmp;
+            break;
           }
+          _node = _node->_parent;
           if (_node->_left == pre)
             break;
         }
@@ -149,10 +152,9 @@ public:
     iterator &operator--()
     {
       //_trace.push(BSTree::_root);
-      iterator tmp = *this;
+      //iterator tmp = *this;
       if (_node->_left != 0)
       {
-        _trace.push(_node);
         _node = _node->_left;
         toMax();
       }
@@ -161,14 +163,14 @@ public:
         while (1)
         {
           BSTreeNode<T> *pre = _node;
-          goBack();
+          if (_node->_parent == 0)
+          {
+            //*this = tmp;
+            break;
+          }
+          _node = _node->_parent;
           if (_node->_right == pre)
             break;
-          if (_trace.empty())
-          {
-            *(this) = tmp;
-            return tmp;
-          }
         }
       }
       return *(this);
@@ -191,15 +193,10 @@ public:
 
   private:
     BSTreeNode<T> *_node;
-    stack<BSTreeNode<T> *> _trace;
     iterator toMin()
     {
       while (_node->_left != 0)
       {
-        //BSTreeNode<T> *copy_node = _node;
-        _trace.push(_node);
-
-        //cout << "push push >< ~MIN~ !!!\n";
         _node = _node->_left;
       }
       return *this;
@@ -208,21 +205,9 @@ public:
     {
       while (_node->_right != 0)
       {
-        //BSTreeNode<T> *copy_node = _node;
-        _trace.push(_node);
-        //cout << "push push >< ~MAX~ !!!\n";
         _node = _node->_right;
       }
       return *this;
-    }
-    bool goBack()
-    {
-      //cout << "let go back!!\n";
-      if (_trace.empty())
-        return false;
-      _node = _trace.top();
-      _trace.pop();
-      return true;
     }
   };
 
@@ -235,8 +220,7 @@ public:
 
   iterator end() const
   {
-    iterator tmp(_root);
-    tmp.toMax();
+    iterator tmp(_tail);
     return tmp;
   }
 
@@ -250,24 +234,57 @@ public:
     return _size;
   }
 
-  void insert(const T &x)
-  {
-    insertnode(x, _root);
-    _size++;
-  }
-  void insertnode(const T &x, BSTreeNode<T> *&t)
-  {
-    if (t == _tail)
-      t = new BSTreeNode<T>(x, 0, _tail);
-    else if (t == 0)
-    {
-      t = new BSTreeNode<T>(x, 0, 0);
+  // void insert(const T &x)
+  // {
+  //   if (_root == _tail)
+  //   {
+  //     _root = new BSTreeNode<T>(x, 0, _tail, 0);
+  //     _tail->_parent = _root;
+  //   }
+  //   else
+  //   {
+  //     insertnode(x, 0, _root);
+  //     _size++;
+  //   }
+  // }
+  // void insertnode(const T &x, BSTreeNode<T> *m, BSTreeNode<T> *&t)
+  // {
+  //   if (t == _tail)
+  //     t = new BSTreeNode<T>(x, 0, _tail, m);
+  //   else if (t == 0)
+  //   {
+  //     t = new BSTreeNode<T>(x, 0, 0, m);
+  //   }
+  //   else if (t->_data >= x)
+  //     insertnode(x, t, t->_left);
+  //   else if (t->_data < x)
+  //     insertnode(x, t, t->_right);
+  //   //else if(t->_data == x) insertnode(x,--t->_right);
+  // }
+  void insert(const T& x) {
+    if(_root == _tail){
+      _tail->_parent = _root= new BSTreeNode<T>(x, 0, _tail, 0);
+      _size++;
+      return;
     }
-    else if (t->_data >= x)
-      insertnode(x, t->_left);
-    else if (t->_data < x)
-      insertnode(x, t->_right);
-    //else if(t->_data == x) insertnode(x,--t->_right);
+    BSTreeNode<T>* nanja(_root);
+    BSTreeNode<T>* sidekick = nanja;
+    while (nanja != 0 && nanja != _tail){
+      sidekick = nanja;
+      if(x>=nanja->_data) nanja = nanja->_right;
+      else nanja = nanja->_left;
+    }
+    if(nanja==0){ 
+      if(sidekick->_data<=x)
+      sidekick->_right = new BSTreeNode<T>(x, 0, 0, sidekick); 
+      else
+      sidekick->_left = new BSTreeNode<T>(x, 0, 0, sidekick);
+      _size++;
+    }
+    else if (nanja == _tail){
+      sidekick->_right = _tail->_parent = new BSTreeNode<T>(x, 0, _tail, sidekick);
+      _size++;
+    }
   }
   void pop_front()
   {
@@ -276,18 +293,10 @@ public:
   void pop_back()
   {
     iterator tmp = end();
-    tmp.goBack();
+    //tmp._node = tmp._node->_parent;
+    tmp--;
     erase(tmp);
   }
-  // BSTreeNode<T>* find_parent_to_me(iterator& pos){
-  //   iterator mother = pos;
-  //   if(!mother.goBack()){
-  //     return _root;
-  //   }
-  //   else if(mother._node->_left==pos._node) return &mother._node->_left;
-  //   else if(mother._node->_right==pos._node) return &mother._node->_right;
-  // }
-
   // return false if nothing to erase
   bool erase(iterator pos)
   {
@@ -296,23 +305,23 @@ public:
     if (pos._node == _tail)
       return false;
     BSTreeNode<T> *posnode = pos._node;
-    iterator &mother = pos;
-    if (!mother.goBack())
+    if (!pos._node->_parent)
     {
-      erase_hand(_root);
+      erase_hand(_root, 0);
     }
-    if (mother._node->_left == posnode)
+    //iterator mother(pos._node->_parent);
+    BSTreeNode<T> *mother = posnode->_parent;
+    if (pos._node->_parent->_left == posnode)
     {
-      erase_hand(mother._node->_left);
+      erase_hand(pos._node->_parent->_left, mother);
     }
-    else if (mother._node->_right == posnode)
+    else if (pos._node->_parent->_right == posnode)
     {
-      erase_hand(mother._node->_right);
+      erase_hand(pos._node->_parent->_right, mother);
     }
-    //else cout << "fuckup bitch!\n";
-    //_tail->_left = _tail->_right = 0;
     return false;
   }
+  
 
   bool erase(const T &x)
   {
@@ -328,7 +337,6 @@ public:
       }
       else if (walker._node->_data >= x)
       {
-        walker._trace.push(walker._node);
         if (walker._node->_left == 0)
         {
           found = -1;
@@ -338,7 +346,6 @@ public:
       }
       else if (walker._node->_data < x)
       {
-        walker._trace.push(walker._node);
         if (walker._node->_right == 0)
         {
           found = -1;
@@ -357,34 +364,9 @@ public:
   {
     while (!empty())
       pop_front();
-    // int nothing = 0;
-    // for (iterator i = begin(); i != end(); i++)
-    // {
-    //   if(i._node->_left==_tail) cout<< "fuckyou left is tail!!!\n";
-    //   else if(i._node->_right==_tail) cout<< "fuckyou right is tail!!!\n";
-    //   else nothing++;
-    // }
-    // cout << "safe nothing:" << nothing << endl;
-    // nothing = 0;
-    // iterator i = begin(), j = begin();
-    // while (!empty()){
-    //   j++;
-    //   cout << i._node->_data << endl;
-    //   if (!erase(i))
-    //     nothing++;
-    //   if(j==_tail)break;
-    //   i = j;
-    // }
-    // cout << "fuck it can't be erase bitch! : " << nothing << endl;
-
-    //for(iterator i = begin(); i != end(); ++i) { erase(i); }
-
   } // delete all nodes except for the root node
   void sort() const {}
-  void print() const
-  {
-    cout << "PRINT\n";
-  }
+  void print() const {}
 
 private:
   BSTreeNode<T> *_root;
