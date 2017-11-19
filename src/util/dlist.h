@@ -153,13 +153,10 @@ public:
 
    void clear() { 
      if(!empty()){
-     //for (iterator li = begin(); li != end();li++){
-     //    erase(li);
-     // }
      while(!empty()){
        pop_front();
      }
-     }
+    }
    }  // delete all nodes except for the dummy node
    void sort() const {
      if(!_isSorted)
@@ -180,21 +177,41 @@ public:
        iterator tail(end._node->_prev);
        if (head != tail)
        {
-         iterator p = head._node->_prev;
-         for (iterator i = head; i != end; i++)
-         {
-           if (*i < *tail)
-           {
-             p._node = p._node->_next;
-             const T tmp = p._node->_data;
-             p._node->_data = i._node->_data;
-             i._node->_data = tmp;
-           }
+        //find approp pivot
+        iterator pivot = tail;
+        iterator a = head;
+        iterator b = tail;
+        while(1){
+            if(a._node->_next == b._node){
+              pivot = b;
+              break;
+            }
+            if(a._node->_next->_next==b._node){
+              pivot = ++a;
+              break;
+            }
+          a++;
+          b--;
+        }
+        //pivot found!!!
+        T pivot_data = *pivot;
+        iterator p = head._node->_prev;
+        for (iterator i = head; i != end; i++)
+        {
+          if (*i < pivot_data)
+          {
+            p._node = p._node->_next;
+            if (p == pivot) pivot = i;
+            const T tmp = p._node->_data;
+            p._node->_data = i._node->_data;
+            i._node->_data = tmp;
+          }
          }
          p._node = p._node->_next;
-         const T tmp = p._node->_data;
-         *p = *tail;
-         *tail = tmp;
+         //assert(p != 0);
+          const T tmp = p._node->_data;
+          *p = *pivot;
+          *pivot = tmp;
          quicksort(head, p);
          quicksort(++p, end);
        }
