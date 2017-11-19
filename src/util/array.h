@@ -72,7 +72,6 @@ public:
 
    private:
       T*    _node;
-      stack<BSTreeNode *> _trace;
    };
 
    // TODO: implement these functions
