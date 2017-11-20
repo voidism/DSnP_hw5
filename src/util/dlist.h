@@ -115,26 +115,48 @@ public:
      _isSorted = false;
    }
    void pop_front() { 
+    if(empty())return;
+    if(_head->_prev==_head)return;
      if(!empty()){
-       DListNode<T> *predelete = _head;
-       _head->_prev->_next = _head->_next;
-       _head->_next->_prev = _head->_prev;
-       _head = _head->_next;
-       delete predelete;
+        DListNode<T> *predelete = _head;
+        _head->_prev->_next = _head->_next;
+        _head->_next->_prev = _head->_prev;
+        _head = _head->_next;
+        delete predelete;
      }
    }
    void pop_back() {
+    if(empty())return;
+    if(_head->_prev==_head)return;
      if(!empty()){
-       DListNode<T> *predelete = end()._node->_prev;
-       end()._node->_prev->_prev->_next = end()._node;
-       end()._node->_prev = end()._node->_prev->_prev;
-       delete predelete;
-     }
+      //  DListNode<T> *predelete = end()._node->_prev;
+      //  end()._node->_prev->_prev->_next = end()._node;
+      //  end()._node->_prev = end()._node->_prev->_prev;
+      //  delete predelete;
+      //erase(--end());
+      if(_head->_prev->_prev==_head){
+        DListNode<T> *predelete = _head;
+        _head->_prev->_next = _head->_next;
+        _head->_next->_prev = _head->_prev;
+        _head = _head->_next;
+        delete predelete;
+      }
+      else{
+        erase(--end());
+      }
+          }
    }
 
    // return false if nothing to erase
    bool erase(iterator pos) { 
      if(empty()) return false;
+     if(pos._node==_head->_prev) return false;
+    //  if(pos._node==_head&&_head->_prev==_head->_next){
+    //    DListNode<T> *predelete = _head;
+    //    _head = _head->_next = _head->_prev;
+    //    delete predelete;
+    //    return true;
+    //  }
      if(pos._node==_head){ pop_front(); return true;}
      pos._node->_prev->_next = pos._node->_next;
      pos._node->_next->_prev = pos._node->_prev;
